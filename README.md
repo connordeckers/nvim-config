@@ -20,14 +20,13 @@
   Enables beautiful code styling, interactions, and plenty of other goodies.
 
   Includes:
-
-      - [`nvim-treesitter/playground`](https://github.com/nvim-treesitter/playground) Lets me see the current AST for the file.
-      - [`nvim-treesitter/nvim-treesitter-textobjects`](https://github.com/nvim-treesitter/nvim-treesitter-textobjects) Adds a bunch of predefined text objects to make life much nicer.
-      - [`windwp/nvim-ts-autotag`](https://github.com/windwp/nvim-ts-autotag) Auto close various kinds of tags. Especially useful with HTML/JSX/etc.
-      - [`theHamsta/nvim-treesitter-pairs`](https://github.com/theHamsta/nvim-treesitter-pairs) Find associated brackets using treesitter.
-      - [`JoosepAlviste/nvim-ts-context-commentstring`](https://github.com/JoosepAlviste/nvim-ts-context-commentstring)
-      	A collection of comment strings based on the filetype of the currently selected block.
-      	Courtesy of treesitter, this is able to identify code blocks within other filetypes, such as nested CSS/HTML in Typescript template strings, etc.
+	- [`nvim-treesitter/playground`](https://github.com/nvim-treesitter/playground) Lets me see the current AST for the file.
+	- [`nvim-treesitter/nvim-treesitter-textobjects`](https://github.com/nvim-treesitter/nvim-treesitter-textobjects) Adds a bunch of predefined text objects to make life much nicer.
+	- [`windwp/nvim-ts-autotag`](https://github.com/windwp/nvim-ts-autotag) Auto close various kinds of tags. Especially useful with HTML/JSX/etc.
+	- [`theHamsta/nvim-treesitter-pairs`](https://github.com/theHamsta/nvim-treesitter-pairs) Find associated brackets using treesitter.
+	- [`JoosepAlviste/nvim-ts-context-commentstring`](https://github.com/JoosepAlviste/nvim-ts-context-commentstring)
+		A collection of comment strings based on the filetype of the currently selected block.
+		Courtesy of treesitter, this is able to identify code blocks within other filetypes, such as nested CSS/HTML in Typescript template strings, etc.
 
 - [`neovim/nvim-lspconfig`](https://github.com/neovim/nvim-lspconfig)
   The native LSP engine gets better, easier to interact with configurations. Practically a defacto standard.
@@ -49,7 +48,12 @@
 - [`hrsh7th/nvim-cmp`](https://github.com/hrsh7th/nvim-cmp)
   Auto completion turned up to 11.
 
-  Includes additional integrations: - [`hrsh7th/cmp-nvim-lsp`](https://github.com/hrsh7th/cmp-nvim-lsp) for LSP completions - [`hrsh7th/cmp-buffer`](https://github.com/hrsh7th/cmp-buffer) for completions from the buffer - [`hrsh7th/cmp-path`](https://github.com/hrsh7th/cmp-path) for FS path-based completions - [`hrsh7th/cmp-cmdline`](https://github.com/hrsh7th/cmp-cmdline) for command-line completions - [`saadparwaiz1/cmp_luasnip`](https://github.com/saadparwaiz1/cmp_luasnip) for snippet completions
+  Includes additional integrations: 
+	- [`hrsh7th/cmp-nvim-lsp`](https://github.com/hrsh7th/cmp-nvim-lsp) for LSP completions 
+	- [`hrsh7th/cmp-buffer`](https://github.com/hrsh7th/cmp-buffer) for completions from the buffer 
+	- [`hrsh7th/cmp-path`](https://github.com/hrsh7th/cmp-path) for FS path-based completions 
+	- [`hrsh7th/cmp-cmdline`](https://github.com/hrsh7th/cmp-cmdline) for command-line completions 
+	- [`saadparwaiz1/cmp_luasnip`](https://github.com/saadparwaiz1/cmp_luasnip) for snippet completions
 
 ## Theme
 
