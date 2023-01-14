@@ -2,28 +2,6 @@ local packer = require 'packer'
 local use = packer.use
 
 -- Themes
-use { 'sainnhe/gruvbox-material', disable = true }
-use { 'RRethy/nvim-base16', disable = true }
-use {
-  'navarasu/onedark.nvim',
-  disable = true,
-  config = function()
-    local theme = require 'onedark'
-    theme.setup {
-      style = 'dark',
-      transparent = false,
-      code_style = {
-        comments = 'italic',
-        keywords = 'italic',
-        functions = 'none',
-        strings = 'none',
-        variables = 'none',
-      },
-    }
-    theme.load()
-  end,
-}
-
 use {
   'rose-pine/neovim',
   as = 'rose-pine',
