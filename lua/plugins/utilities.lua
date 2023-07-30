@@ -1,4 +1,4 @@
-local lazy_load = require('utils.import-utils').lazy_load
+local lazy_load = require 'utils'.import.lazy_load
 
 return {
   -- Swap buffers with each other
