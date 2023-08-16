@@ -70,8 +70,8 @@ return {
     event = { 'BufReadPost', 'BufNewFile' },
     dependencies = {
       'LuaSnip',
-      
-			-- LSP source for nvim-cmp
+
+      -- LSP source for nvim-cmp
       'hrsh7th/cmp-nvim-lsp',
 
       -- Use completions from the buffer
@@ -191,11 +191,11 @@ return {
         -- },
 
         sources = cmp.config.sources {
-          { name = 'nvim_lsp', group_index = 2 },
-          { name = 'path', group_index = 2 },
-          { name = 'luasnip', max_item_count = 4, group_index = 3 },
+          { name = 'nvim_lsp', group_index = 1 },
+          { name = 'path', group_index = 1 },
+          { name = 'luasnip', max_item_count = 4, group_index = 2 },
           --{ name = "nvim_lua" },
-          { name = 'nvim_lsp_signature_help', group_index = 2 },
+          { name = 'nvim_lsp_signature_help', group_index = 1 },
           --{ name = "buffer" },
         },
 

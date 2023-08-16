@@ -8,17 +8,13 @@ null_ls.sources = {
     'commitlint',
     'cpplint',
     'dotenv_linter',
-    'editorconfig_checker',
-    'eslint_d',
     'fish',
     'gitlint',
     'hadolint',
     'jsonlint',
     'markdownlint',
-    'spectral',
     'stylelint',
     'todo_comments',
-    'yamllint',
   },
   completion = { 'tags' },
   formatting = {
@@ -28,7 +24,7 @@ null_ls.sources = {
     'rustfmt',
     'stylelint',
     'stylua',
-    'yamlfix',
+    'yamlfmt',
     {
       'prettierd',
       {

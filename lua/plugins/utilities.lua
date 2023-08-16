@@ -95,7 +95,7 @@ return {
     event = 'VeryLazy',
     keys = {
       {
-        '<leader>gc',
+        '<leader>gg',
         '<cmd>Git commit<cr>',
         desc = 'Commit currently staged files',
       },
@@ -221,18 +221,18 @@ return {
         -- Configuration options for floating windows
         float = { enable = false },
 
-        mappings = {
-          list = {
-            -- Enter a directory/edit a file by navigating right
-            { key = 'l', action = 'edit' },
+        -- mappings = {
+        --   list = {
+        --     -- Enter a directory/edit a file by navigating right
+        --     { key = 'l', action = 'edit' },
 
-            -- Collapse a directory by navigating left
-            { key = 'h', action = 'close_node' },
+        --     -- Collapse a directory by navigating left
+        --     { key = 'h', action = 'close_node' },
 
-            -- Enter a directory
-            { key = 'L', action = 'cd' },
-          },
-        },
+        --     -- Enter a directory
+        --     { key = 'L', action = 'cd' },
+        --   },
+        -- },
       },
 
       -- UI rendering setup

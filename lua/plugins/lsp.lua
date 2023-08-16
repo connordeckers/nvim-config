@@ -22,7 +22,7 @@ lsp.keybinds = {
     ['<leader>p'] = vim.lsp.buf.format,
     -- ['<leader>ldc'] = vim.lsp.buf.declaration,
 
-    ['<A-k>'] = { mode = { 'n', 'i' }, action = vim.lsp.buf.signature_help },
+    -- ['<A-k>'] = { mode = { 'n', 'i' }, action = vim.lsp.buf.signature_help },
     ['<C-x>'] = { mode = { 'n', 'i' }, action = vim.lsp.buf.code_action },
   },
 }
@@ -43,6 +43,7 @@ lsp.servers = {
   'jsonls',
   'lua_ls',
   'pyright',
+  'taplo',
   'rust_analyzer',
   'vimls',
   'yamlls',
@@ -183,7 +184,9 @@ return {
 
   {
     'williamboman/mason-lspconfig.nvim',
-    opts = { automatic_installation = true, handlers = { lsp.configure } },
+    opts = {
+      automatic_installation = true, --[[ , handlers = { lsp.configure } ]]
+    },
     dependencies = { 'mason.nvim' },
     lazy = true,
   },
@@ -209,9 +212,13 @@ return {
 
   {
     'pmizio/typescript-tools.nvim',
+    -- enabled = false,
     dependencies = { 'plenary.nvim', 'nvim-lspconfig', 'twoslash-queries.nvim' },
     opts = {
       on_attach = function(client, bufnr)
+        client.server_capabilities.documentFormattingProvider = false
+        client.server_capabilities.documentRangeFormattingProvider = false
+
         lsp.on_attach(client, bufnr)
         with('twoslash-queries', function(twoslash)
           twoslash.attach(client, bufnr)
@@ -226,20 +233,210 @@ return {
 
         -- array of strings("fix_all"|"add_missing_imports"|"remove_unused")
         -- specify commands exposed as code_actions
-        expose_as_code_action = { 'fix_all', 'add_missing_imports', 'remove_unused' },
+        expose_as_code_action = {
+          'fix_all',
+          'remove_unused',
+          'add_missing_imports',
+        },
+
+        -- string|nil - specify a custom path to `tsserver.js` file, if this is nil or file under path
+        -- not exists then standard path resolution strategy is applied
+        tsserver_path = nil,
 
         -- specify a list of plugins to load by tsserver, e.g., for support `styled-components`
-        -- tsserver_plugins = {},
+        -- (see 💅 `styled-components` support section)
+        tsserver_plugins = {},
 
-        -- https://github.com/microsoft/TypeScript/blob/v5.0.4/src/server/protocol.ts#L3418
-        -- tsserver_format_options = {},
+        -- this value is passed to: https://nodejs.org/api/cli.html#--max-old-space-sizesize-in-megabytes
+        -- memory limit in megabytes or "auto"(basically no limit)
+        tsserver_max_memory = 'auto',
 
-        -- https://github.com/microsoft/TypeScript/blob/v5.0.4/src/server/protocol.ts#L3439
-        -- tsserver_file_preferences = {},
+        -- described below
+        tsserver_format_options = {
+          insertSpaceAfterCommaDelimiter = true,
+          insertSpaceAfterConstructor = false,
+          insertSpaceAfterSemicolonInForStatements = true,
+          insertSpaceBeforeAndAfterBinaryOperators = true,
+          insertSpaceAfterKeywordsInControlFlowStatements = true,
+          insertSpaceAfterFunctionKeywordForAnonymousFunctions = true,
+          insertSpaceBeforeFunctionParenthesis = false,
+          insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis = false,
+          insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets = false,
+          insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = true,
+          insertSpaceAfterOpeningAndBeforeClosingEmptyBraces = true,
+          insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces = false,
+          insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBraces = false,
+          insertSpaceAfterTypeAssertion = false,
+          placeOpenBraceOnNewLineForFunctions = false,
+          placeOpenBraceOnNewLineForControlBlocks = false,
+          semicolons = 'ignore',
+          indentSwitchCase = true,
+        },
 
+        tsserver_file_preferences = {
+          quotePreference = 'auto',
+          importModuleSpecifierEnding = 'auto',
+          jsxAttributeCompletionStyle = 'auto',
+          allowTextChangesInNewFiles = true,
+          providePrefixAndSuffixTextForRename = true,
+          allowRenameOfImportPath = true,
+          includeAutomaticOptionalChainCompletions = true,
+          provideRefactorNotApplicableReason = true,
+          generateReturnInDocTemplate = true,
+          includeCompletionsForImportStatements = true,
+          includeCompletionsWithSnippetText = true,
+          includeCompletionsWithClassMemberSnippets = true,
+          includeCompletionsWithObjectLiteralMethodSnippets = true,
+          useLabelDetailsInCompletionEntries = true,
+          allowIncompleteCompletions = true,
+          displayPartsForJSDoc = true,
+          disableLineTextInReferences = true,
+          includeInlayParameterNameHints = 'none',
+          includeInlayParameterNameHintsWhenArgumentMatchesName = false,
+          includeInlayFunctionParameterTypeHints = false,
+          includeInlayVariableTypeHints = false,
+          includeInlayVariableTypeHintsWhenTypeMatchesName = false,
+          includeInlayPropertyDeclarationTypeHints = false,
+          includeInlayFunctionLikeReturnTypeHints = false,
+          includeInlayEnumMemberValueHints = false,
+        },
         -- mirror of VSCode's `typescript.suggest.completeFunctionCalls`
-        -- complete_function_calls = false,
+        complete_function_calls = false,
       },
     },
+  },
+
+  {
+    'nvim-treesitter/nvim-treesitter',
+    event = { 'BufReadPost', 'BufNewFile' },
+    cmd = {
+      'TSInstall',
+      'TSInstallSync',
+      'TSInstallInfo',
+      'TSUpdate',
+      'TSUpdateSync',
+      'TSUninstall',
+      'TSBufEnable',
+      'TSBufDisable',
+      'TSBufToggle',
+      'TSEnable',
+      'TSDisable',
+      'TSToggle',
+      'TSModuleInfo',
+      'TSEditQuery',
+      'TSEditQueryUserAfter',
+    },
+    dependencies = {
+      'nvim-treesitter/playground',
+      'nvim-treesitter/nvim-treesitter-textobjects',
+
+      -- 'windwp/nvim-ts-autotag',
+      'theHamsta/nvim-treesitter-pairs',
+      'JoosepAlviste/nvim-ts-context-commentstring',
+
+      { 'bennypowers/template-literal-comments.nvim', opts = {} },
+    },
+
+    opts = {
+      -- Automatically install missing parsers when entering buffer
+      -- Recommendation: set to false if you don't have `tree-sitter` CLI installed locally
+      auto_install = true,
+
+      -- autotag = { enable = true },
+      highlight = { enable = true },
+      pairs = {
+        enable = true,
+        disable = {},
+        highlight_pair_events = {}, -- e.g. {"CursorMoved"}, -- when to highlight the pairs, use {} to deactivate highlighting
+        highlight_self = false, -- whether to highlight also the part of the pair under cursor (or only the partner)
+        goto_right_end = false, -- whether to go to the end of the right partner or the beginning
+        fallback_cmd_normal = "call matchit#Match_wrapper('',1,'n')", -- What command to issue when we can't find a pair (e.g. "normal! %")
+        keymaps = {
+          goto_partner = '<leader>%',
+          delete_balanced = 'X',
+        },
+        delete_balanced = {
+          only_on_first_char = false, -- whether to trigger balanced delete when on first character of a pair
+          fallback_cmd_normal = nil, -- fallback command when no pair found, can be nil
+          longest_partner = false, -- whether to delete the longest or the shortest pair when multiple found.
+          -- E.g. whether to delete the angle bracket or whole tag in  <pair> </pair>
+        },
+      },
+      incremental_selection = {
+        enable = true,
+        keymaps = {
+          init_selection = '<CR>',
+          node_incremental = '<CR>',
+          scope_incremental = '<S-CR>',
+          node_decremental = '<BS>',
+        },
+      },
+      textobjects = {
+        select = {
+          enable = true,
+
+          -- Automatically jump forward to textobj, similar to targets.vim
+          lookahead = true,
+
+          keymaps = {
+            -- You can use the capture groups defined in textobjects.scm
+            ['af'] = '@function.outer',
+            ['if'] = '@function.inner',
+            ['ac'] = '@class.outer',
+            ['ic'] = '@class.inner',
+            ['aC'] = '@conditional.outer',
+            ['iC'] = '@conditional.inner',
+            ['aS'] = '@tag.self-closing',
+            ['ap'] = '@json.property',
+          },
+        },
+      },
+      refactor = {
+        -- Highlights definition and usages of the current symbol under the cursor.
+        highlight_definitions = {
+          enable = true,
+          -- Set to false if you have an `updatetime` of ~100.
+          clear_on_cursor_move = true,
+        },
+
+        -- Renames the symbol under the cursor within the current scope (and current file).
+        -- Disabled; prefer using LSP, as it can rename the same symbol outside this file.
+        smart_rename = { enable = false },
+
+        -- Provides "go to definition" for the symbol under the cursor, and lists the definitions from the current file.
+        -- If you use goto_definition_lsp_fallback instead of goto_definition in the config below vim.lsp.buf.definition
+        -- is used if nvim-treesitter can not resolve the variable. goto_next_usage/goto_previous_usage go to the next usage
+        -- of the identifier under the cursor.
+        navigation = {
+          enable = true,
+          keymaps = {
+            goto_definition = 'gnd',
+            list_definitions = 'gnD',
+            list_definitions_toc = 'gO',
+            goto_next_usage = '<a-*>',
+            goto_previous_usage = '<a-#>',
+          },
+        },
+      },
+
+      context_commentstring = {
+        enable = true,
+        enable_autocmd = false,
+      },
+
+      -- View treesitter information directly in Neovim!
+      playground = {
+        enable = true,
+        updatetime = 25, -- Debounced time for highlighting nodes in the playground from source code
+      },
+    },
+
+    config = function(_, opts)
+      require('nvim-treesitter.configs').setup(opts)
+    end,
+
+    build = function()
+      require('nvim-treesitter.install').update { with_sync = true }
+    end,
   },
 }
