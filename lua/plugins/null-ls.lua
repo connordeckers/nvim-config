@@ -78,7 +78,7 @@ return {
   },
   {
     'jose-elias-alvarez/null-ls.nvim',
-    event = { 'BufReadPost', 'BufNewFile' },
+    event = 'VeryLazy',
     dependencies = { 'mason.nvim', 'mason-null-ls.nvim' },
     opts = function()
       -- The null-ls sources to use

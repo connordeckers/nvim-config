@@ -15,7 +15,7 @@ function M.format_buffer(bufnr)
   end
 
   return vim.lsp.buf.format {
-    filter = filter,
+    -- filter = filter,
     timeout_ms = 10000,
   }
 end
