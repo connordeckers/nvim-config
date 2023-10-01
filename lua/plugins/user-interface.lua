@@ -518,31 +518,22 @@ return {
 
   {
     'lukas-reineke/indent-blankline.nvim',
+    enabled = false,
+    main = 'ibl',
     event = { 'BufReadPost', 'BufNewFile' },
     opts = {
-      -- space_char_blankline = ' ',
-      show_current_context = true,
-      -- show_current_context_start = true,
-      char = '▏',
-      context_char = '▏',
-      -- char = '',
-      char_highlight_list = {
-        'IndentBlanklineIndent1',
-        'IndentBlanklineIndent2',
-        'IndentBlanklineIndent3',
-        'IndentBlanklineIndent4',
-        'IndentBlanklineIndent5',
-        'IndentBlanklineIndent6',
+      indent = {
+        highlight = {
+          'IndentBlanklineIndent1',
+          'IndentBlanklineIndent2',
+          'IndentBlanklineIndent3',
+          'IndentBlanklineIndent4',
+          'IndentBlanklineIndent5',
+          'IndentBlanklineIndent6',
+        },
+
+        char = '▏',
       },
-      space_char_highlight_list = {
-        'IndentBlanklineIndent1',
-        'IndentBlanklineIndent2',
-        'IndentBlanklineIndent3',
-        'IndentBlanklineIndent4',
-        'IndentBlanklineIndent5',
-        'IndentBlanklineIndent6',
-      },
-      show_trailing_blankline_indent = false,
     },
   },
 }
