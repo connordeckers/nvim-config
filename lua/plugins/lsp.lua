@@ -23,7 +23,7 @@ lsp.keybinds = {
     -- ['<leader>ldc'] = vim.lsp.buf.declaration,
 
     -- ['<A-k>'] = { mode = { 'n', 'i' }, action = vim.lsp.buf.signature_help },
-    ['<C-x>'] = { mode = { 'n', 'i' }, action = vim.lsp.buf.code_action },
+    ['<C-x>'] = { mode = { 'n', 'i', 'v' }, action = vim.lsp.buf.code_action },
   },
 }
 
@@ -41,12 +41,14 @@ lsp.servers = {
   'emmet_ls',
   'html',
   'jsonls',
+  'yamlls',
   'lua_ls',
-  'pyright',
+  -- 'pyright',
   'taplo',
   'rust_analyzer',
+  'tsserver',
   'vimls',
-  'yamlls',
+  -- 'vtsls',
 }
 
 -- Custom overrides for specific clients.
@@ -74,25 +76,92 @@ lsp.config = {
 
   -- Don't autostart deno. We only want to use it for
   -- specific circumstances.
-  ['denols'] = { autostart = false, settings = { cmd_env = { NO_COLOR = false } } },
+  ['denols'] = {
+    autostart = false,
+    settings = {
+      cmd_env = {
+        NO_COLOR = false,
+      },
+    },
+
+    after_lsp_config = function(lspconf)
+      return {
+        root_dir = lspconf.util.root_pattern('deno.json', 'deno.jsonc'),
+      }
+    end,
+  },
 
   -- Don't warn us about the alphabetical order of keys.
-  ['yamlls'] = { settings = { yaml = { keyOrdering = false } } },
+
+  ['jsonls'] = {
+    after_lsp_config = function(lspconf)
+      --Enable (broadcasting) snippet capability for completion
+      local capabilities = vim.lsp.protocol.make_client_capabilities()
+      capabilities.textDocument.completion.completionItem.snippetSupport = true
+
+      return {
+        capabilities = capabilities,
+        settings = {
+          json = {
+            schemas = require('schemastore').json.schemas(),
+            validate = { enable = true },
+          },
+        },
+      }
+    end,
+  },
+  ['yamlls'] = {
+    settings = {
+      yaml = {
+        keyOrdering = false,
+      },
+    },
+    after_lsp_config = function()
+      return {
+        settings = {
+          yaml = {
+            schemaStore = {
+              -- You must disable built-in schemaStore support if you want to use
+              -- this plugin and its advanced options like `ignore`.
+              enable = false,
+              -- Avoid TypeError: Cannot read properties of undefined (reading 'length')
+              url = '',
+            },
+            schemas = require('schemastore').yaml.schemas(),
+          },
+        },
+      }
+    end,
+  },
 
   -- In addition to the defaults, add in the twoslash-queries
   -- functionality to our client.
-  -- ['tsserver'] = {
-  -- 	on_attach = function(client, bufnr)
-  -- 		with('twoslash-queries', function(twoslash)
-  -- 			twoslash.attach(client, bufnr)
-  -- 		end)
-  -- 	end
-  -- },
+  ['tsserver'] = {
+    on_attach = function(client, bufnr)
+      client.server_capabilities.documentFormattingProvider = false
+      client.server_capabilities.documentRangeFormattingProvider = false
+
+      require('plugins.lsp').tsserver.TSPrebuild.on_attach(client, bufnr)
+
+      with('twoslash-queries', function(twoslash)
+        twoslash.attach(client, bufnr)
+      end)
+    end,
+  },
 }
 
 -- The default capabilities of our LSP clients
 lsp.capabilities = function()
   return vim.lsp.protocol.make_client_capabilities()
+end
+
+local function code_action_listener()
+  local context = { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
+  local params = vim.lsp.util.make_range_params()
+  params.context = context
+  vim.lsp.buf_request(0, 'textDocument/codeAction', params, function(err, result, ctx, config)
+    -- do something with result - e.g. check if empty and show some indication such as a sign
+  end)
 end
 
 -- Global on_attach, to be called for all servers that
@@ -104,6 +173,21 @@ lsp.on_attach = function(client, bufnr)
     vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, { callback = vim.lsp.buf.document_highlight, buffer = bufnr })
     vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, { callback = vim.lsp.buf.clear_references, buffer = bufnr })
   end
+
+  vim.api.nvim_create_autocmd('CursorHold', {
+    buffer = bufnr,
+    callback = function()
+      local opts = {
+        focusable = false,
+        close_events = { 'BufLeave', 'CursorMoved', 'InsertEnter', 'FocusLost' },
+        border = 'rounded',
+        source = 'always',
+        prefix = ' ',
+        scope = 'cursor',
+      }
+      vim.diagnostic.open_float(nil, opts)
+    end,
+  })
 
   -- Add the autocommands for formatting on save
   if client.supports_method 'textDocument/formatting' then
@@ -122,9 +206,15 @@ end
 -- Configure an LSP server. This just takes a name, and can parse
 -- the rest of the relevant configuration data.
 lsp.configure = function(server)
+  local nvim_lsp = require 'lspconfig'
   local config = {}
   config.base = { capabilities = lsp.capabilities() }
   config.server = type(lsp.config[server]) == 'table' and lsp.config[server] or {}
+
+  if config.server.after_lsp_config ~= nil then
+    config.server = vim.tbl_deep_extend('force', config.server, config.server.after_lsp_config(nvim_lsp) or {})
+  end
+
   config.override = {
     on_attach = function(client, bufnr)
       lsp.on_attach(client, bufnr)
@@ -134,9 +224,9 @@ lsp.configure = function(server)
     end,
   }
 
-  config.complete = vim.tbl_extend('force', config.base, config.server, config.override)
+  config.complete = vim.tbl_deep_extend('force', config.base, config.server, config.override)
 
-  require('lspconfig')[server].setup(config.complete)
+  nvim_lsp[server].setup(config.complete)
 end
 
 -- Setup all of our predefined servers.
@@ -157,6 +247,46 @@ lsp.setup_servers = function()
   for _, server in ipairs(lsp.servers) do
     lsp.configure(server)
   end
+
+  local function goto_definition(split_cmd)
+    local util = vim.lsp.util
+    local log = require 'vim.lsp.log'
+    local api = vim.api
+
+    -- note, this handler style is for neovim 0.5.1/0.6, if on 0.5, call with function(_, method, result)
+    local handler = function(_, result, ctx)
+      if result == nil or vim.tbl_isempty(result) then
+        local _ = log.info() and log.info(ctx.method, 'No location found')
+        return nil
+      end
+
+      if split_cmd then
+        vim.cmd(split_cmd)
+      end
+
+      if vim.tbl_islist(result) then
+        util.jump_to_location(result[1])
+
+        if #result > 1 then
+          util.set_qflist(util.locations_to_items(result, 'utf-8'))
+          api.nvim_command 'copen'
+          api.nvim_command 'wincmd p'
+        end
+      else
+        util.jump_to_location(result)
+      end
+    end
+
+    return handler
+  end
+
+  vim.lsp.handlers['textDocument/definition'] = goto_definition 'split'
+
+  vim.diagnostic.config {
+    virtual_text = {
+      prefix = '⨯', -- Could be '●', '▎', 'x'
+    },
+  }
 end
 
 return {
@@ -206,105 +336,208 @@ return {
     dependencies = {
       'neoconf.nvim',
       'mason-lspconfig.nvim',
+      'b0o/schemastore.nvim',
     },
     config = lsp.setup_servers,
   },
 
-  {
-    'pmizio/typescript-tools.nvim',
-    -- enabled = false,
-    dependencies = { 'plenary.nvim', 'nvim-lspconfig', 'twoslash-queries.nvim' },
-    opts = {
-      on_attach = function(client, bufnr)
-        client.server_capabilities.documentFormattingProvider = false
-        client.server_capabilities.documentRangeFormattingProvider = false
+  -- {
+  --   'yioneko/nvim-vtsls',
+  --   dependencies = { 'nvim-lspconfig', 'nvim-tree.lua' },
+  --   opts = {
+  --     -- customize handlers for commands
+  --     -- handlers = {
+  --     --   source_definition = function(err, locations) end,
+  --     --   file_references = function(err, locations) end,
+  --     --   code_action = function(err, actions) end,
+  --     -- },
+  --     -- automatically trigger renaming of extracted symbol
+  --     refactor_auto_rename = true,
+  --   },
+  --   config = function(_, opts)
+  --     require('vtsls').config(opts)
 
-        lsp.on_attach(client, bufnr)
-        with('twoslash-queries', function(twoslash)
-          twoslash.attach(client, bufnr)
-        end)
-      end,
-      settings = {
-        -- spawn additional tsserver instance to calculate diagnostics on it
-        separate_diagnostic_server = true,
+  --     vim.lsp.commands['editor.action.showReferences'] = function(command, ctx)
+  --       local locations = command.arguments[3]
+  --       local client = vim.lsp.get_client_by_id(ctx.client_id)
+  --       if client and locations and #locations > 0 then
+  --         local items = vim.lsp.util.locations_to_items(locations, client.offset_encoding)
+  --         vim.fn.setloclist(0, {}, ' ', { title = 'References', items = items, context = ctx })
+  --         vim.api.nvim_command 'lopen'
+  --       end
+  --     end
 
-        -- "change"|"insert_leave" determine when the client asks the server about diagnostic
-        publish_diagnostic_on = 'insert_leave',
+  --     local path_sep = package.config:sub(1, 1)
 
-        -- array of strings("fix_all"|"add_missing_imports"|"remove_unused")
-        -- specify commands exposed as code_actions
-        expose_as_code_action = {
-          'fix_all',
-          'remove_unused',
-          'add_missing_imports',
-        },
+  --     local function trim_sep(path)
+  --       return path:gsub(path_sep .. '$', '')
+  --     end
 
-        -- string|nil - specify a custom path to `tsserver.js` file, if this is nil or file under path
-        -- not exists then standard path resolution strategy is applied
-        tsserver_path = nil,
+  --     local function uri_from_path(path)
+  --       return vim.uri_from_fname(trim_sep(path))
+  --     end
 
-        -- specify a list of plugins to load by tsserver, e.g., for support `styled-components`
-        -- (see 💅 `styled-components` support section)
-        tsserver_plugins = {},
+  --     local function is_sub_path(path, folder)
+  --       path = trim_sep(path)
+  --       folder = trim_sep(path)
+  --       if path == folder then
+  --         return true
+  --       else
+  --         return path:sub(1, #folder + 1) == folder .. path_sep
+  --       end
+  --     end
 
-        -- this value is passed to: https://nodejs.org/api/cli.html#--max-old-space-sizesize-in-megabytes
-        -- memory limit in megabytes or "auto"(basically no limit)
-        tsserver_max_memory = 'auto',
+  --     local function check_folders_contains(folders, path)
+  --       for _, folder in pairs(folders) do
+  --         if is_sub_path(path, folder) then
+  --           return true
+  --         end
+  --       end
+  --       return false
+  --     end
 
-        -- described below
-        tsserver_format_options = {
-          insertSpaceAfterCommaDelimiter = true,
-          insertSpaceAfterConstructor = false,
-          insertSpaceAfterSemicolonInForStatements = true,
-          insertSpaceBeforeAndAfterBinaryOperators = true,
-          insertSpaceAfterKeywordsInControlFlowStatements = true,
-          insertSpaceAfterFunctionKeywordForAnonymousFunctions = true,
-          insertSpaceBeforeFunctionParenthesis = false,
-          insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis = false,
-          insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets = false,
-          insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = true,
-          insertSpaceAfterOpeningAndBeforeClosingEmptyBraces = true,
-          insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces = false,
-          insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBraces = false,
-          insertSpaceAfterTypeAssertion = false,
-          placeOpenBraceOnNewLineForFunctions = false,
-          placeOpenBraceOnNewLineForControlBlocks = false,
-          semicolons = 'ignore',
-          indentSwitchCase = true,
-        },
+  --     local function match_file_operation_filter(filter, name, type)
+  --       if filter.scheme and filter.scheme ~= 'file' then
+  --         -- we do not support uri scheme other than file
+  --         return false
+  --       end
+  --       local pattern = filter.pattern
+  --       local matches = pattern.matches
 
-        tsserver_file_preferences = {
-          quotePreference = 'auto',
-          importModuleSpecifierEnding = 'auto',
-          jsxAttributeCompletionStyle = 'auto',
-          allowTextChangesInNewFiles = true,
-          providePrefixAndSuffixTextForRename = true,
-          allowRenameOfImportPath = true,
-          includeAutomaticOptionalChainCompletions = true,
-          provideRefactorNotApplicableReason = true,
-          generateReturnInDocTemplate = true,
-          includeCompletionsForImportStatements = true,
-          includeCompletionsWithSnippetText = true,
-          includeCompletionsWithClassMemberSnippets = true,
-          includeCompletionsWithObjectLiteralMethodSnippets = true,
-          useLabelDetailsInCompletionEntries = true,
-          allowIncompleteCompletions = true,
-          displayPartsForJSDoc = true,
-          disableLineTextInReferences = true,
-          includeInlayParameterNameHints = 'none',
-          includeInlayParameterNameHintsWhenArgumentMatchesName = false,
-          includeInlayFunctionParameterTypeHints = false,
-          includeInlayVariableTypeHints = false,
-          includeInlayVariableTypeHintsWhenTypeMatchesName = false,
-          includeInlayPropertyDeclarationTypeHints = false,
-          includeInlayFunctionLikeReturnTypeHints = false,
-          includeInlayEnumMemberValueHints = false,
-        },
-        -- mirror of VSCode's `typescript.suggest.completeFunctionCalls`
-        complete_function_calls = false,
-      },
-    },
-  },
+  --       if type ~= matches then
+  --         return false
+  --       end
+
+  --       local regex_str = vim.fn.glob2regpat(pattern.glob)
+  --       if vim.tbl_get(pattern, 'options', 'ignoreCase') then
+  --         regex_str = '\\c' .. regex_str
+  --       end
+  --       return vim.regex(regex_str):match_str(name) ~= nil
+  --     end
+
+  --     local api = require 'nvim-tree.api'
+
+  --     api.events.subscribe(api.events.Event.NodeRenamed, function(data)
+  --       local stat = vim.loop.fs_stat(data.new_name)
+  --       if not stat then
+  --         return
+  --       end
+
+  --       local type = ({ file = 'file', directory = 'folder' })[stat.type]
+  --       local clients = vim.lsp.get_clients {}
+  --       for _, client in ipairs(clients) do
+  --         if check_folders_contains(client.workspace_folders, data.old_name) then
+  --           local filters = vim.tbl_get(client.server_capabilities, 'workspace', 'fileOperations', 'didRename', 'filters') or {}
+  --           for _, filter in pairs(filters) do
+  --             if match_file_operation_filter(filter, data.old_name, type) and match_file_operation_filter(filter, data.new_name, type) then
+  --               client.notify('workspace/didRenameFiles', { files = { { oldUri = uri_from_path(data.old_name), newUri = uri_from_path(data.new_name) } } })
+  --             end
+  --           end
+  --         end
+  --       end
+  --     end)
+  --   end,
+  -- },
+
+  -- {
+  --   'pmizio/typescript-tools.nvim',
+  --   -- enabled = false,
+  --   dependencies = { 'plenary.nvim', 'nvim-lspconfig', 'twoslash-queries.nvim', 'lbrayner/vim-rzip' },
+  --   opts = function()
+  --     return {
+  --       root_dir = require('lspconfig').util.find_json_ancestor,
+  --       single_file_support = false,
+  --       on_attach = function(client, bufnr)
+  --         client.server_capabilities.documentFormattingProvider = false
+  --         client.server_capabilities.documentRangeFormattingProvider = false
+
+  --         lsp.on_attach(client, bufnr)
+  --         with('twoslash-queries', function(twoslash)
+  --           twoslash.attach(client, bufnr)
+  --         end)
+  --       end,
+  --       settings = {
+  --         -- spawn additional tsserver instance to calculate diagnostics on it
+  --         separate_diagnostic_server = true,
+
+  --         -- "change"|"insert_leave" determine when the client asks the server about diagnostic
+  --         publish_diagnostic_on = 'insert_leave',
+
+  --         -- array of strings("fix_all"|"add_missing_imports"|"remove_unused")
+  --         -- specify commands exposed as code_actions
+  --         expose_as_code_action = {
+  --           'fix_all',
+  --           'remove_unused',
+  --           'add_missing_imports',
+  --         },
+
+  --         -- string|nil - specify a custom path to `tsserver.js` file, if this is nil or file under path
+  --         -- not exists then standard path resolution strategy is applied
+  --         tsserver_path = nil,
+
+  --         -- specify a list of plugins to load by tsserver, e.g., for support `styled-components`
+  --         -- (see 💅 `styled-components` support section)
+  --         tsserver_plugins = {},
+
+  --         -- this value is passed to: https://nodejs.org/api/cli.html#--max-old-space-sizesize-in-megabytes
+  --         -- memory limit in megabytes or "auto"(basically no limit)
+  --         tsserver_max_memory = 'auto',
+
+  --         -- described below
+  --         tsserver_format_options = {
+  --           insertSpaceAfterCommaDelimiter = true,
+  --           insertSpaceAfterConstructor = false,
+  --           insertSpaceAfterSemicolonInForStatements = true,
+  --           insertSpaceBeforeAndAfterBinaryOperators = true,
+  --           insertSpaceAfterKeywordsInControlFlowStatements = true,
+  --           insertSpaceAfterFunctionKeywordForAnonymousFunctions = true,
+  --           insertSpaceBeforeFunctionParenthesis = false,
+  --           insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis = false,
+  --           insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets = false,
+  --           insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = true,
+  --           insertSpaceAfterOpeningAndBeforeClosingEmptyBraces = true,
+  --           insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces = false,
+  --           insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBraces = false,
+  --           insertSpaceAfterTypeAssertion = false,
+  --           placeOpenBraceOnNewLineForFunctions = false,
+  --           placeOpenBraceOnNewLineForControlBlocks = false,
+  --           semicolons = 'ignore',
+  --           indentSwitchCase = true,
+  --         },
+
+  --         tsserver_file_preferences = {
+  --           quotePreference = 'auto',
+  --           importModuleSpecifierEnding = 'auto',
+  --           jsxAttributeCompletionStyle = 'auto',
+  --           allowTextChangesInNewFiles = true,
+  --           providePrefixAndSuffixTextForRename = true,
+  --           allowRenameOfImportPath = true,
+  --           includeAutomaticOptionalChainCompletions = true,
+  --           provideRefactorNotApplicableReason = true,
+  --           generateReturnInDocTemplate = true,
+  --           includeCompletionsForImportStatements = true,
+  --           includeCompletionsWithSnippetText = true,
+  --           includeCompletionsWithClassMemberSnippets = true,
+  --           includeCompletionsWithObjectLiteralMethodSnippets = true,
+  --           useLabelDetailsInCompletionEntries = true,
+  --           allowIncompleteCompletions = true,
+  --           displayPartsForJSDoc = true,
+  --           disableLineTextInReferences = true,
+  --           includeInlayParameterNameHints = 'none',
+  --           includeInlayParameterNameHintsWhenArgumentMatchesName = false,
+  --           includeInlayFunctionParameterTypeHints = false,
+  --           includeInlayVariableTypeHints = false,
+  --           includeInlayVariableTypeHintsWhenTypeMatchesName = false,
+  --           includeInlayPropertyDeclarationTypeHints = false,
+  --           includeInlayFunctionLikeReturnTypeHints = false,
+  --           includeInlayEnumMemberValueHints = false,
+  --         },
+  --         -- mirror of VSCode's `typescript.suggest.completeFunctionCalls`
+  --         complete_function_calls = false,
+  --       },
+  --     }
+  --   end,
+  -- },
 
   {
     'nvim-treesitter/nvim-treesitter',

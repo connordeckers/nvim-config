@@ -1,11 +1,24 @@
 local gitsigns = require 'gitsigns'
 
 local hint = [[
- _J_: Next hunk   	_s_: Stage Hunk        _d_: Show Deleted   	_b_: Line blame
- _K_: Prev hunk   	_u_: Undo Last Stage	 _r_: Reset hunk			_B_: Full blame
- _p_: Preview hunk 	_S_: Stage Buffer      _R_: Reset buffer   	_/_: Show Base File
+ _J_: Next hunk   	   	
+ _K_: Prev hunk   	 		
+ _p_: Preview hunk 	   	
  ^
- ^ ^ 	             _<Enter>_: Commit              _q_: Exit
+ _s_: Stage Hunk
+ _u_: Undo Last Stage	
+ _S_: Stage Buffer
+ ^
+ _d_: Show Deleted
+ _r_: Reset hunk	
+ _R_: Reset buffer
+ ^
+ _b_: Line blame
+ _B_: Full blame
+ _/_: Show Base File
+ ^
+ _<Enter>_: Commit
+ _q_: Exit
 ]]
 
 return {
@@ -16,7 +29,7 @@ return {
     invoke_on_body = true,
     hint = {
       border = 'rounded',
-      position = 'bottom',
+      position = 'middle-right',
     },
     on_enter = function()
       vim.cmd 'mkview'
