@@ -141,7 +141,7 @@ lsp.config = {
       client.server_capabilities.documentFormattingProvider = false
       client.server_capabilities.documentRangeFormattingProvider = false
 
-      require('plugins.lsp').tsserver.TSPrebuild.on_attach(client, bufnr)
+      require('config.lsp').tsserver.TSPrebuild.on_attach(client, bufnr)
 
       with('twoslash-queries', function(twoslash)
         twoslash.attach(client, bufnr)
@@ -565,7 +565,13 @@ return {
 
       -- 'windwp/nvim-ts-autotag',
       'theHamsta/nvim-treesitter-pairs',
-      'JoosepAlviste/nvim-ts-context-commentstring',
+      {
+        'JoosepAlviste/nvim-ts-context-commentstring',
+        opts = { enable_autocmd = false },
+        init = function()
+          vim.g.skip_ts_context_commentstring_module = true
+        end,
+      },
 
       { 'bennypowers/template-literal-comments.nvim', opts = {} },
     },
@@ -652,10 +658,10 @@ return {
         },
       },
 
-      context_commentstring = {
-        enable = true,
-        enable_autocmd = false,
-      },
+      -- context_commentstring = {
+      --   enable = true,
+      --   enable_autocmd = false,
+      -- },
 
       -- View treesitter information directly in Neovim!
       playground = {
