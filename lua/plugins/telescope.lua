@@ -39,7 +39,11 @@ local keys = {
   -- Show notifications
   -- { '<leader>tn', function() require('telescope').extensions.notify.notify(require('telescope.themes').get_dropdown {}) end, },
 
-  { '<leader>ff', builtin 'grep_string', desc = 'Grep current string under cursor within workspace' },
+  {
+    '<leader>ff',
+    builtin 'grep_string',
+    desc = 'Grep current string under cursor within workspace',
+  },
 
   { '<leader>tj', builtin 'jumplist', desc = 'Show jumplist' },
 
@@ -56,11 +60,31 @@ local keys = {
   { '<leader>dg', builtin 'diagnostics', desc = 'Show diagnostics' },
   { '<leader>lq', builtin 'quickfix' },
   { '<leader>gs', builtin 'git_status' },
-  { '<leader>lr', builtin 'lsp_references', desc = 'Lists LSP references for word under the cursor' },
-  { '<leader>lci', builtin 'lsp_incoming_calls', desc = 'Lists LSP incoming calls for word under the cursor' },
-  { '<leader>lco', builtin 'lsp_outgoing_calls', desc = 'Lists LSP outgoing calls for word under the cursor' },
-  { '<leader>ls', builtin 'lsp_document_symbols', desc = 'Lists LSP document symbols in the current buffer' },
-  { '<leader>ws', builtin 'lsp_dynamic_workspace_symbols', desc = 'Dynamically Lists LSP for all workspace symbols' },
+  {
+    '<leader>lr',
+    builtin 'lsp_references',
+    desc = 'Lists LSP references for word under the cursor',
+  },
+  {
+    '<leader>lci',
+    builtin 'lsp_incoming_calls',
+    desc = 'Lists LSP incoming calls for word under the cursor',
+  },
+  {
+    '<leader>lco',
+    builtin 'lsp_outgoing_calls',
+    desc = 'Lists LSP outgoing calls for word under the cursor',
+  },
+  {
+    '<leader>ls',
+    builtin 'lsp_document_symbols',
+    desc = 'Lists LSP document symbols in the current buffer',
+  },
+  {
+    '<leader>ws',
+    builtin 'lsp_dynamic_workspace_symbols',
+    desc = 'Dynamically Lists LSP for all workspace symbols',
+  },
   {
     '<leader>li',
     builtin 'lsp_implementations',
@@ -96,12 +120,11 @@ return {
       'nvim-telescope/telescope-file-browser.nvim',
       'ahmedkhalf/project.nvim',
       { 'tknightz/telescope-termfinder.nvim', dependencies = { 'akinsho/toggleterm.nvim' } },
-
       'keyvchan/telescope-find-pickers.nvim',
       'cljoly/telescope-repo.nvim',
       'chip/telescope-software-licenses.nvim',
       'debugloop/telescope-undo.nvim',
-      { 'nvim-telescope/telescope-dap.nvim', dependencies = { 'mfussenegger/nvim-dap' } },
+      { 'nvim-telescope/telescope-dap.nvim', dependencies = { 'nvim-dap' } },
     },
     keys = keys,
     opts = {

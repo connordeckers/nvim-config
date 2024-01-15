@@ -847,7 +847,7 @@ return {
 	-- Commenting tool
 	{
 		'numtostr/comment.nvim',
-		dependencies = { 'JoosepAlviste/nvim-ts-context-commentstring' },
+		dependencies = { 'nvim-ts-context-commentstring' },
 		keys = {
 			-- Toggle current line (linewise) using C-i
 			{
@@ -929,7 +929,7 @@ return {
 
 			---Pre-hook, called before commenting the line
 			---@type fun(ctx:CommentCtx):any|nil
-			-- pre_hook = require('ts_context_commentstring.integrations.comment_nvim').create_pre_hook(),
+			pre_hook = require('ts_context_commentstring.integrations.comment_nvim').create_pre_hook(),
 
 			---Post-hook, called after commenting is done
 			---@type fun(ctx: CommentCtx)

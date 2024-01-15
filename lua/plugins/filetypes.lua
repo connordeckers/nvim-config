@@ -130,6 +130,7 @@ return {
       },
     },
   },
+  { 'IndianBoy42/tree-sitter-just', ft = 'just' },
   { 'fladson/vim-kitty', ft = 'kitty' },
   { 'isobit/vim-caddyfile', ft = 'caddyfile' },
   { 'kovetskiy/sxhkd-vim', event = 'VeryLazy' },
