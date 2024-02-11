@@ -88,21 +88,21 @@ end)
 -- map('<Leader><Leader>', ':%s/\\<<C-r>=expand("<cword>")<CR>\\>//g<Left><Left>')
 
 -- Format the file
-map('<Leader>p', {
-  {
-    mode = 'n',
-    action = function()
-      require('utils.format').format_buffer()
-    end,
-  },
-  {
-    mode = 'x',
-    action = function()
-      vim.lsp.buf.range_formatting {}
-    end,
-    options = { silent = true, buffer = true },
-  },
-})
+-- map('<Leader>p', {
+--   {
+--     mode = 'n',
+--     action = function()
+--       require('utils.format').format_buffer()
+--     end,
+--   },
+--   {
+--     mode = 'x',
+--     action = function()
+--       vim.lsp.buf.range_formatting {}
+--     end,
+--     options = { silent = true, buffer = true },
+--   },
+-- })
 
 -- Quickly fold code
 
