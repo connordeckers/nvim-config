@@ -145,7 +145,7 @@ lsp.servers = {
   'angularls',
   'bashls',
   -- 'biome',
-  'tsserver',
+  -- 'tsserver',
   'cssls',
   'cssmodules_ls',
   'denols',
@@ -161,8 +161,10 @@ lsp.servers = {
   'taplo',
   -- 'rust_analyzer',
   -- 'xmlformatter',
-  -- 'tsserver',
+  'volar', -- load before tsserver
+  'tsserver',
   'vimls',
+  -- 'vuels',
   -- 'vtsls',
 }
 
@@ -225,6 +227,7 @@ lsp.config = {
       }
     end,
   },
+
   ['yamlls'] = {
     settings = {
       yaml = {
@@ -267,7 +270,8 @@ lsp.config = {
   -- },
 
   ['biome'] = {
-    on_attach = function(client)
+    --- @type vim.lsp.client.on_attach_cb
+    on_attach = function(client, bufnr)
       client.server_capabilities.documentFormattingProvider = true
       client.server_capabilities.documentRangeFormattingProvider = true
     end,
@@ -276,6 +280,16 @@ lsp.config = {
   -- In addition to the defaults, add in the twoslash-queries
   -- functionality to our client.
   ['tsserver'] = {
+    init_options = {
+      plugins = {
+        {
+          name = '@vue/typescript-plugin',
+          location = vim.fn.expand '$HOME/.local/share/pnpm/global/5/node_modules/@vue/typescript-plugin',
+          languages = { 'javascript', 'typescript', 'vue' },
+        },
+      },
+    },
+    --- @type vim.lsp.client.on_attach_cb
     on_attach = function(client, bufnr)
       client.server_capabilities.documentFormattingProvider = false
       client.server_capabilities.documentRangeFormattingProvider = false
@@ -286,7 +300,21 @@ lsp.config = {
         twoslash.attach(client, bufnr)
       end)
     end,
+    filetypes = {
+      -- As of 2.0.0, Volar no longer supports TypeScript itself. Instead, a plugin adds Vue support to this language server.
+      -- IMPORTANT: It is crucial to ensure that @vue/typescript-plugin and volar are of identical versions.
+      'vue',
+
+      'javascript',
+      'javascriptreact',
+      'javascript.jsx',
+      'typescript',
+      'typescriptreact',
+      'typescript.tsx',
+    },
   },
+
+  ['volar'] = { filetypes = { 'vue' } },
 }
 
 -- The default capabilities of our LSP clients
@@ -311,11 +339,19 @@ lsp.on_attach = function(client, bufnr)
   lsp.helpers.show_diagnostic(client, bufnr)
   lsp.helpers.setup_codelens_refresh(client, bufnr)
   lsp.helpers.setup_document_highlight(client, bufnr)
+
+  -- if client.capabilities.get then
+
+  -- end
 end
 
 -- Configure an LSP server. This just takes a name, and can parse
 -- the rest of the relevant configuration data.
 lsp.configure = function(server)
+  if require('neoconf').get(server .. '.disable') then
+    return
+  end
+
   local nvim_lsp = require 'lspconfig'
   local config = {}
   config.base = { capabilities = lsp.capabilities() }
@@ -363,7 +399,7 @@ lsp.setup = {
   end,
 
   after_setup = function()
-    vim.lsp.handlers['textDocument/definition'] = lsp.helpers.show_definition_in_split 'split'
+    -- vim.lsp.handlers['textDocument/definition'] = lsp.helpers.show_definition_in_split 'split'
 
     vim.diagnostic.config {
       virtual_text = {
@@ -377,6 +413,8 @@ lsp.setup_servers = function()
   lsp.setup.before_setup()
   lsp.setup.create_servers()
   lsp.setup.after_setup()
+
+  -- require 'utils.vuejs-lsp'
 end
 
 return {
@@ -405,7 +443,8 @@ return {
   {
     'williamboman/mason-lspconfig.nvim',
     opts = {
-      automatic_installation = true, --[[ , handlers = { lsp.configure } ]]
+      automatic_installation = true,
+      -- handlers = { lsp.configure },
     },
     dependencies = { 'mason.nvim' },
     lazy = true,
@@ -431,10 +470,30 @@ return {
     config = lsp.setup_servers,
   },
 
+  -- {
+  --   'pmizio/typescript-tools.nvim',
+  --   dependencies = { 'plenary.nvim', 'nvim-lspconfig' },
+  --   ft = { 'typescript', 'javascript', 'typescriptreact' },
+  --   opts = {
+  --     on_attach = function(client, bufnr)
+  --       client.server_capabilities.documentFormattingProvider = false
+  --       client.server_capabilities.documentRangeFormattingProvider = false
+
+  --       require('config.lsp').tsserver.TSPrebuild.on_attach(client, bufnr)
+
+  --       with('twoslash-queries', function(twoslash)
+  --         twoslash.attach(client, bufnr)
+  --       end)
+  --     end,
+  --     settings = { expose_as_code_action = 'all' },
+  --   },
+  -- },
+
   {
     'saecki/crates.nvim',
     dependencies = { 'plenary.nvim' },
     opts = {},
+    ft = 'rust',
   },
 
   {
@@ -445,6 +504,7 @@ return {
       'plenary.nvim',
       'nvim-dap',
     },
+    ft = 'rust',
     config = function()
       local rt = require 'rust-tools'
       local mason_path = vim.fn.glob(vim.fn.stdpath 'data' .. '/mason/')

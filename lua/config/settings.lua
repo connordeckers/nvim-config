@@ -12,6 +12,9 @@ vim.cmd [[ highlight NvimTreeStatusLine guibg=bg ]]
 -- TextEdit might fail if hidden is not set.
 vim.opt.hidden = true
 
+-- Disable mouse interactions
+vim.opt.mouse = ''
+
 -- Some servers have issues with backup files, see #649.
 vim.opt.backup = false
 vim.opt.writebackup = false

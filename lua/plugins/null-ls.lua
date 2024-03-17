@@ -26,10 +26,10 @@ local null_ls = {
       'fish_indent',
       -- 'fixjson',
       'nginx_beautifier',
-      'rustfmt',
+      -- 'rustfmt',
       'stylelint',
       'stylua',
-      'xmlformat',
+      -- 'xmlformat',
       'yamlfmt',
       {
         'prettierd',
