@@ -16,6 +16,8 @@ vim.g.mapleader = leader
 vim.g.maplocalleader = leader
 
 require('lazy').setup('plugins', {
+  -- Auto check every hour for updates
+  checker = { enabled = true },
   -- dev = {
   --   -- directory where you store your local plugin projects
   --   path = '~/dev/personal/forks',
