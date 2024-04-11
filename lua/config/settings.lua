@@ -56,7 +56,8 @@ vim.opt.smartcase = true
 
 --Decrease update time
 vim.opt.updatetime = 500
-vim.opt.timeoutlen = 500
+vim.opt.timeout = true
+vim.opt.timeoutlen = 300
 
 -- Yank to/from the system clipboard by default
 vim.opt.clipboard = 'unnamedplus'
