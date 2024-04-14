@@ -127,7 +127,6 @@ return {
         },
         -- For more plugins integrations please scroll down (https://github.com/catppuccin/nvim#integrations)
       },
-
       custom_highlights = color.customCatppuccinHighlight,
     },
   },
@@ -135,7 +134,7 @@ return {
   {
     'lukas-reineke/headlines.nvim',
     event = 'BufRead',
-    dependencies = 'nvim-treesitter/nvim-treesitter',
+    dependencies = 'nvim-treesitter',
     opts = {
       markdown = {
         fat_headlines = true,
@@ -156,31 +155,24 @@ return {
       input = {
         -- Can be 'left', 'right', or 'center'
         prompt_align = 'center',
-
         -- These are passed to nvim_open_win
         -- anchor = 'NW',
         border = 'rounded',
-
         -- 'editor' and 'win' will default to being centered
         relative = 'cursor',
-
         win_options = {
           -- Window transparency (0-100)
           -- This fixes the black background in float windows
           winblend = 0,
         },
       },
-
       select = {
         -- Options for nui Menu
         nui = { border = { style = 'rounded' } },
-
         -- Options for built-in selector
         builtin = { border = 'rounded' },
-
         -- Priority list of preferred vim.select implementations
         backend = { 'telescope', 'fzf_lua', 'fzf', 'builtin', 'nui' },
-
         get_config = function(opts)
           local has_telescope, themes = pcall(require, 'telescope.themes')
           if has_telescope and opts.kind == 'codeaction' then
@@ -206,22 +198,18 @@ return {
       --   If not available, we use `mini` as the fallback
       'rcarriga/nvim-notify',
     },
-
     opts = {
       cmdline = {
         enabled = true, -- enables the Noice cmdline UI
-
         --- @type table<string, CmdlineFormat>
         format = {
           lua = { pattern = '^:%s*lua=?%s+', icon = '', lang = 'lua' },
           input = {},
         },
       },
-
       -- You can add any custom commands below that will be available with `:Noice command`
       ---@type table<string, NoiceCommand>
       commands = {},
-
       lsp = {
         progress = {
           format_done = {
@@ -238,18 +226,15 @@ return {
           -- override cmp documentation with Noice (needs the other options to work)
           ['cmp.entry.get_documentation'] = false,
         },
-
         hover = {
           enabled = true,
           opts = { border = 'rounded' },
         },
-
         signature = {
           enabled = true,
           opts = { border = 'rounded' },
         },
       },
-
       ---@type NoicePresets
       presets = {
         -- you can enable a preset by setting it to true, or a table that will override the preset config
@@ -260,7 +245,6 @@ return {
         inc_rename = true, -- enables an input dialog for inc-rename.nvim
         lsp_doc_border = true, -- add a border to hover docs and signature help
       },
-
       ---@type NoiceConfigViews
       views = {
         virtualtext = { hl_group = 'LspVirtualText' },
@@ -270,7 +254,6 @@ return {
           },
         },
       }, ---@see section on views
-
       ---@type NoiceRouteConfig[]
       routes = {
         {
@@ -561,7 +544,6 @@ return {
       ---whether to attach navic to language servers automatically
       ---@type boolean
       attach_navic = false,
-
       ---whether to create winbar updater autocmd
       ---@type boolean
       create_autocmd = false,
@@ -597,7 +579,6 @@ return {
           'IndentBlanklineIndent5',
           'IndentBlanklineIndent6',
         },
-
         char = '▏',
       },
     },

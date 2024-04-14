@@ -120,7 +120,6 @@ lsp.keybinds = {
     ['<leader>lq'] = vim.diagnostic.setloclist,
     ['<leader>lf'] = vim.diagnostic.open_float,
   },
-
   ---@type table<string, string | function | KeybindTable | KeybindTable[]>
   buffer = {
     ['K'] = lazy_load { 'noice.lsp', 'hover' },
@@ -130,7 +129,6 @@ lsp.keybinds = {
     ['<leader>p'] = function(bufnr)
       require('utils.format').format_buffer(bufnr)
     end,
-
     -- ['<leader>ldc'] = vim.lsp.buf.declaration,
 
     ['<leader>k'] = vim.lsp.codelens.run,
@@ -190,7 +188,6 @@ lsp.config = {
       },
     },
   },
-
   -- Don't autostart deno. We only want to use it for
   -- specific circumstances.
   ['denols'] = {
@@ -207,7 +204,6 @@ lsp.config = {
       }
     end,
   },
-
   -- Don't warn us about the alphabetical order of keys.
 
   ['jsonls'] = {
@@ -227,7 +223,6 @@ lsp.config = {
       }
     end,
   },
-
   ['yamlls'] = {
     settings = {
       yaml = {
@@ -251,7 +246,6 @@ lsp.config = {
       }
     end,
   },
-
   -- ['rust_analyzer'] = {
   --   on_attach = function(client, bufnr)
   --     client.server_capabilities.textDocument = client.server_capabilities.textDocument or {}
@@ -276,7 +270,6 @@ lsp.config = {
       client.server_capabilities.documentRangeFormattingProvider = true
     end,
   },
-
   -- In addition to the defaults, add in the twoslash-queries
   -- functionality to our client.
   ['tsserver'] = {
@@ -313,7 +306,6 @@ lsp.config = {
       'typescript.tsx',
     },
   },
-
   ['volar'] = { filetypes = { 'vue' } },
 }
 
@@ -391,13 +383,11 @@ lsp.setup = {
       end,
     })
   end,
-
   create_servers = function()
     for _, server in ipairs(lsp.servers) do
       lsp.configure(server)
     end
   end,
-
   after_setup = function()
     -- vim.lsp.handlers['textDocument/definition'] = lsp.helpers.show_definition_in_split 'split'
 
@@ -532,7 +522,6 @@ return {
           executor = require('rust-tools/executors').termopen, -- can be quickfix or termopen
           reload_workspace_from_cargo_toml = true,
           runnables = { use_telescope = true },
-
           -- inlay_hints = {
           --   auto = true,
           --   only_current_line = false,
@@ -547,7 +536,6 @@ return {
           -- },
 
           hover_actions = { border = 'rounded' },
-
           on_initialized = function()
             vim.api.nvim_create_autocmd({ 'BufWritePost', 'BufEnter', 'CursorHold', 'InsertLeave' }, {
               pattern = { '*.rs' },
@@ -574,9 +562,7 @@ return {
             lsp.on_attach(client, bufnr)
             lsp.setup.after_setup()
           end,
-
           capabilities = lsp.capabilities(),
-
           settings = {
             ['rust-analyzer'] = {
               lens = { enable = true },
@@ -632,111 +618,108 @@ return {
 
       { 'bennypowers/template-literal-comments.nvim', opts = {} },
     },
+    config = function()
+      -- local parser_config = require('nvim-treesitter.parsers').get_parser_configs()
 
-    opts = {
-      -- Automatically install missing parsers when entering buffer
-      -- Recommendation: set to false if you don't have `tree-sitter` CLI installed locally
-      auto_install = true,
+      -- parser_config.nu = {
+      --   install_info = {
+      --     url = 'https://github.com/nushell/tree-sitter-nu',
+      --     files = { 'src/parser.c' },
+      --     branch = 'main',
+      --   },
+      --   filetype = 'nu',
+      -- }
 
-      -- autotag = { enable = true },
-      highlight = { enable = true },
-      pairs = {
-        enable = true,
-        disable = {},
-        highlight_pair_events = {}, -- e.g. {"CursorMoved"}, -- when to highlight the pairs, use {} to deactivate highlighting
-        highlight_self = false, -- whether to highlight also the part of the pair under cursor (or only the partner)
-        goto_right_end = false, -- whether to go to the end of the right partner or the beginning
-        fallback_cmd_normal = "call matchit#Match_wrapper('',1,'n')", -- What command to issue when we can't find a pair (e.g. "normal! %")
-        keymaps = {
-          goto_partner = '<leader>%',
-          delete_balanced = 'X',
-        },
-        delete_balanced = {
-          only_on_first_char = false, -- whether to trigger balanced delete when on first character of a pair
-          fallback_cmd_normal = nil, -- fallback command when no pair found, can be nil
-          longest_partner = false, -- whether to delete the longest or the shortest pair when multiple found.
-          -- E.g. whether to delete the angle bracket or whole tag in  <pair> </pair>
-        },
-      },
-      incremental_selection = {
-        enable = true,
-        keymaps = {
-          init_selection = '<CR>',
-          node_incremental = '<CR>',
-          scope_incremental = '<S-CR>',
-          node_decremental = '<BS>',
-        },
-      },
-      textobjects = {
-        select = {
+      require('nvim-treesitter.configs').setup {
+        -- Automatically install missing parsers when entering buffer
+        -- Recommendation: set to false if you don't have `tree-sitter` CLI installed locally
+        auto_install = true,
+        -- autotag = { enable = true },
+        highlight = {
           enable = true,
-
-          -- Automatically jump forward to textobj, similar to targets.vim
-          lookahead = true,
-
+          -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
+          -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
+          -- Using this option may slow down your editor, and you may see some duplicate highlights.
+          -- Instead of true it can also be a list of languages
+          additional_vim_regex_highlighting = false,
+        },
+        pairs = {
+          enable = true,
+          disable = {},
+          highlight_pair_events = {}, -- e.g. {"CursorMoved"}, -- when to highlight the pairs, use {} to deactivate highlighting
+          highlight_self = false, -- whether to highlight also the part of the pair under cursor (or only the partner)
+          goto_right_end = false, -- whether to go to the end of the right partner or the beginning
+          fallback_cmd_normal = "call matchit#Match_wrapper('',1,'n')", -- What command to issue when we can't find a pair (e.g. "normal! %")
           keymaps = {
-            -- You can use the capture groups defined in textobjects.scm
-            ['af'] = '@function.outer',
-            ['if'] = '@function.inner',
-            ['ac'] = '@class.outer',
-            ['ic'] = '@class.inner',
-            ['aC'] = '@conditional.outer',
-            ['iC'] = '@conditional.inner',
-            ['aS'] = '@tag.self-closing',
-            ['ap'] = '@json.property',
+            goto_partner = '<leader>%',
+            delete_balanced = 'X',
+          },
+          delete_balanced = {
+            only_on_first_char = false, -- whether to trigger balanced delete when on first character of a pair
+            fallback_cmd_normal = nil, -- fallback command when no pair found, can be nil
+            longest_partner = false, -- whether to delete the longest or the shortest pair when multiple found.
+            -- E.g. whether to delete the angle bracket or whole tag in  <pair> </pair>
           },
         },
-      },
-      refactor = {
-        -- Highlights definition and usages of the current symbol under the cursor.
-        highlight_definitions = {
-          enable = true,
-          -- Set to false if you have an `updatetime` of ~100.
-          clear_on_cursor_move = true,
-        },
-
-        -- Renames the symbol under the cursor within the current scope (and current file).
-        -- Disabled; prefer using LSP, as it can rename the same symbol outside this file.
-        smart_rename = { enable = false },
-
-        -- Provides "go to definition" for the symbol under the cursor, and lists the definitions from the current file.
-        -- If you use goto_definition_lsp_fallback instead of goto_definition in the config below vim.lsp.buf.definition
-        -- is used if nvim-treesitter can not resolve the variable. goto_next_usage/goto_previous_usage go to the next usage
-        -- of the identifier under the cursor.
-        navigation = {
+        incremental_selection = {
           enable = true,
           keymaps = {
-            goto_definition = 'gnd',
-            list_definitions = 'gnD',
-            list_definitions_toc = 'gO',
-            goto_next_usage = '<a-*>',
-            goto_previous_usage = '<a-#>',
+            init_selection = '<CR>',
+            node_incremental = '<CR>',
+            scope_incremental = '<S-CR>',
+            node_decremental = '<BS>',
           },
         },
-      },
-
-      -- View treesitter information directly in Neovim!
-      playground = {
-        enable = true,
-        updatetime = 25, -- Debounced time for highlighting nodes in the playground from source code
-      },
-    },
-
-    -- config = function(_, opts)
-    --   local parser_config = require('nvim-treesitter.parsers').get_parser_configs()
-
-    --   parser_config.nu = {
-    --     install_info = {
-    --       url = 'https://github.com/nushell/tree-sitter-nu',
-    --       files = { 'src/parser.c' },
-    --       branch = 'main',
-    --     },
-    --     filetype = 'nu',
-    --   }
-
-    --   require('nvim-treesitter.configs').setup(opts)
-    -- end,
-
+        textobjects = {
+          select = {
+            enable = true,
+            -- Automatically jump forward to textobj, similar to targets.vim
+            lookahead = true,
+            keymaps = {
+              -- You can use the capture groups defined in textobjects.scm
+              ['af'] = '@function.outer',
+              ['if'] = '@function.inner',
+              ['ac'] = '@class.outer',
+              ['ic'] = '@class.inner',
+              ['aC'] = '@conditional.outer',
+              ['iC'] = '@conditional.inner',
+              ['aS'] = '@tag.self-closing',
+              ['ap'] = '@json.property',
+            },
+          },
+        },
+        refactor = {
+          -- Highlights definition and usages of the current symbol under the cursor.
+          highlight_definitions = {
+            enable = true,
+            -- Set to false if you have an `updatetime` of ~100.
+            clear_on_cursor_move = true,
+          },
+          -- Renames the symbol under the cursor within the current scope (and current file).
+          -- Disabled; prefer using LSP, as it can rename the same symbol outside this file.
+          smart_rename = { enable = false },
+          -- Provides "go to definition" for the symbol under the cursor, and lists the definitions from the current file.
+          -- If you use goto_definition_lsp_fallback instead of goto_definition in the config below vim.lsp.buf.definition
+          -- is used if nvim-treesitter can not resolve the variable. goto_next_usage/goto_previous_usage go to the next usage
+          -- of the identifier under the cursor.
+          navigation = {
+            enable = true,
+            keymaps = {
+              goto_definition = 'gnd',
+              list_definitions = 'gnD',
+              list_definitions_toc = 'gO',
+              goto_next_usage = '<a-*>',
+              goto_previous_usage = '<a-#>',
+            },
+          },
+        },
+        -- View treesitter information directly in Neovim!
+        playground = {
+          enable = true,
+          updatetime = 25, -- Debounced time for highlighting nodes in the playground from source code
+        },
+      }
+    end,
     build = function()
       require('nvim-treesitter.install').update { with_sync = true }
     end,

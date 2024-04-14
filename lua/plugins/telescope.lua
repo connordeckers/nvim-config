@@ -33,8 +33,11 @@ local keys = {
   { '<leader>to', builtin 'oldfiles' },
 
   { '<leader>tg', builtin 'live_grep', desc = 'Show grep finder' },
-
-  { '<leader>ts', builtin('grep_string', { shorten_path = true, word_match = '-w', only_sort_text = true, search = '' }), desc = 'Show fuzzy text search' },
+  {
+    '<leader>ts',
+    builtin('grep_string', { shorten_path = true, word_match = '-w', only_sort_text = true, search = '' }),
+    desc = 'Show fuzzy text search',
+  },
 
   -- Show notifications
   -- { '<leader>tn', function() require('telescope').extensions.notify.notify(require('telescope.themes').get_dropdown {}) end, },
@@ -46,17 +49,13 @@ local keys = {
   },
 
   { '<leader>tj', builtin 'jumplist', desc = 'Show jumplist' },
-
   { '"', builtin 'registers', desc = 'List registers' },
-
   { '<C-p>', builtin 'buffers', desc = 'List open buffers' },
-
   { '<leader>tp', extension 'projects', desc = 'Show project finder' },
 
   -- { '<leader>b', extension 'file_browser', desc = 'Show file browser' },
 
   { '<leader>tl', extension 'termfinder', desc = 'Show project finder' },
-
   { '<leader>dg', builtin 'diagnostics', desc = 'Show diagnostics' },
   { '<leader>lq', builtin 'quickfix' },
   { '<leader>gs', builtin 'git_status' },
@@ -115,7 +114,7 @@ return {
       'nvim-tree/nvim-web-devicons',
       'nvim-telescope/telescope-symbols.nvim',
       'BurntSushi/ripgrep',
-      'nvim-treesitter/nvim-treesitter',
+      'nvim-treesitter',
       fzf_native,
       'nvim-telescope/telescope-file-browser.nvim',
       'ahmedkhalf/project.nvim',
@@ -140,28 +139,20 @@ return {
 
         -- Lists LSP references for word under the cursor
         lsp_references = { theme = 'dropdown' },
-
         -- Lists LSP incoming calls for word under the cursor
         lsp_incoming_calls = { theme = 'dropdown' },
-
         -- Lists LSP outgoing calls for word under the cursor
         lsp_outgoing_calls = { theme = 'dropdown' },
-
         -- Lists LSP document symbols in the current buffer
         lsp_document_symbols = { theme = 'dropdown' },
-
         -- Lists LSP document symbols in the current workspace
         lsp_workspace_symbols = { theme = 'dropdown' },
-
         -- Dynamically Lists LSP for all workspace symbols
         lsp_dynamic_workspace_symbols = { theme = 'dropdown' },
-
         -- Goto the implementation of the word under the cursor if there's only one, otherwise show all options in Telescope
         lsp_implementations = { theme = 'dropdown' },
-
         -- Goto the definition of the word under the cursor, if there's only one, otherwise show all options in Telescope
         lsp_definitions = { theme = 'dropdown' },
-
         -- Goto the definition of the type of the word under the cursor, if there's only one, otherwise show all options in Telescope
         lsp_type_definitions = { theme = 'dropdown' },
       },
@@ -191,13 +182,10 @@ return {
         fzf = {
           -- false will only do exact matching
           fuzzy = true,
-
           -- override the generic sorter
           override_generic_sorter = true,
-
           -- override the file sorter
           override_file_sorter = true,
-
           -- "smart_case" or "ignore_case" or "respect_case"
           case_mode = 'smart_case',
         },
@@ -207,7 +195,6 @@ return {
         },
       },
     },
-
     config = function(_, opts)
       require('telescope').setup(opts)
       require('telescope').load_extension 'fzf'
