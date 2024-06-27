@@ -16,7 +16,7 @@ return {
   --     -- replaceHome = true,
 
   --     -- -- What to do when entering a directory, personally I use "Oil .", but Ex is preinstalled with neovim
-  --     -- -- projectEntry = 'Ex',
+  --     projectEntry = 'Oil',
 
   --     -- -- The farthest back in time that directories should be shown
   --     -- -- I personally use "yesterday" so that there aren't millions of directories on the screen.

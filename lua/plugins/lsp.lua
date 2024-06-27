@@ -20,7 +20,7 @@ function lsp.helpers.show_definition_in_split(split_cmd)
       vim.cmd(split_cmd)
     end
 
-    if vim.tbl_islist(result) then
+    if vim.islist(result) then
       vim.lsp.util.jump_to_location(result[1])
 
       if #result > 1 then
@@ -187,7 +187,35 @@ lsp.config = {
         },
       },
     },
+    on_init = function(client)
+      local path = client.workspace_folders[1].name
+
+      if vim.loop.fs_stat(path .. '/.luarc.json') or vim.loop.fs_stat(path .. '/.luarc.jsonc') then
+        return
+      end
+
+      client.config.settings.Lua = vim.tbl_deep_extend('force', client.config.settings.Lua, {
+        runtime = {
+          -- Tell the language server which version of Lua you're using
+          -- (most likely LuaJIT in the case of Neovim)
+          version = 'LuaJIT',
+        },
+        -- Make the server aware of Neovim runtime files
+        workspace = {
+          checkThirdParty = false,
+          library = {
+            vim.env.VIMRUNTIME,
+            -- Depending on the usage, you might want to add additional paths here.
+            -- "${3rd}/luv/library"
+            -- "${3rd}/busted/library",
+          },
+          -- or pull in all of 'runtimepath'. NOTE: this is a lot slower
+          -- library = vim.api.nvim_get_runtime_file("", true)
+        },
+      })
+    end,
   },
+
   -- Don't autostart deno. We only want to use it for
   -- specific circumstances.
   ['denols'] = {
@@ -288,6 +316,7 @@ lsp.config = {
       client.server_capabilities.documentRangeFormattingProvider = false
 
       require('config.lsp').tsserver.TSPrebuild.on_attach(client, bufnr)
+      -- require('workspace-diagnostics').populate_workspace_diagnostics(client, bufnr)
 
       with('twoslash-queries', function(twoslash)
         twoslash.attach(client, bufnr)
@@ -485,6 +514,11 @@ return {
   -- },
 
   {
+    'artemave/workspace-diagnostics.nvim',
+    lazy = true,
+  },
+
+  {
     'saecki/crates.nvim',
     dependencies = { 'plenary.nvim' },
     opts = {},
@@ -601,7 +635,7 @@ return {
       'nvim-treesitter/playground',
       'nvim-treesitter/nvim-treesitter-textobjects',
 
-      -- 'windwp/nvim-ts-autotag',
+      'windwp/nvim-ts-autotag',
       'theHamsta/nvim-treesitter-pairs',
       {
         'JoosepAlviste/nvim-ts-context-commentstring',
@@ -615,115 +649,240 @@ return {
           vim.g.skip_ts_context_commentstring_module = true
         end,
       },
-
       { 'bennypowers/template-literal-comments.nvim', opts = {} },
     },
-    config = function()
-      -- local parser_config = require('nvim-treesitter.parsers').get_parser_configs()
-
-      -- parser_config.nu = {
-      --   install_info = {
-      --     url = 'https://github.com/nushell/tree-sitter-nu',
-      --     files = { 'src/parser.c' },
-      --     branch = 'main',
-      --   },
-      --   filetype = 'nu',
-      -- }
-
-      require('nvim-treesitter.configs').setup {
-        -- Automatically install missing parsers when entering buffer
-        -- Recommendation: set to false if you don't have `tree-sitter` CLI installed locally
-        auto_install = true,
-        -- autotag = { enable = true },
-        highlight = {
-          enable = true,
-          -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
-          -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
-          -- Using this option may slow down your editor, and you may see some duplicate highlights.
-          -- Instead of true it can also be a list of languages
-          additional_vim_regex_highlighting = false,
+    opts = {
+      -- Automatically install missing parsers when entering buffer
+      -- Recommendation: set to false if you don't have `tree-sitter` CLI installed locally
+      auto_install = true,
+      autotag = { enable = true },
+      highlight = {
+        enable = true,
+        -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
+        -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
+        -- Using this option may slow down your editor, and you may see some duplicate highlights.
+        -- Instead of true it can also be a list of languages
+        additional_vim_regex_highlighting = false,
+      },
+      pairs = {
+        enable = true,
+        disable = {},
+        highlight_pair_events = {}, -- e.g. {"CursorMoved"}, -- when to highlight the pairs, use {} to deactivate highlighting
+        highlight_self = false, -- whether to highlight also the part of the pair under cursor (or only the partner)
+        goto_right_end = false, -- whether to go to the end of the right partner or the beginning
+        fallback_cmd_normal = "call matchit#Match_wrapper('',1,'n')", -- What command to issue when we can't find a pair (e.g. "normal! %")
+        keymaps = {
+          goto_partner = '<leader>%',
+          delete_balanced = 'X',
         },
-        pairs = {
+        delete_balanced = {
+          only_on_first_char = false, -- whether to trigger balanced delete when on first character of a pair
+          fallback_cmd_normal = nil, -- fallback command when no pair found, can be nil
+          longest_partner = false, -- whether to delete the longest or the shortest pair when multiple found.
+          -- E.g. whether to delete the angle bracket or whole tag in  <pair> </pair>
+        },
+      },
+      incremental_selection = {
+        enable = true,
+        keymaps = {
+          init_selection = '<CR>',
+          node_incremental = '<CR>',
+          scope_incremental = '<S-CR>',
+          node_decremental = '<BS>',
+        },
+      },
+      textobjects = {
+        select = {
           enable = true,
-          disable = {},
-          highlight_pair_events = {}, -- e.g. {"CursorMoved"}, -- when to highlight the pairs, use {} to deactivate highlighting
-          highlight_self = false, -- whether to highlight also the part of the pair under cursor (or only the partner)
-          goto_right_end = false, -- whether to go to the end of the right partner or the beginning
-          fallback_cmd_normal = "call matchit#Match_wrapper('',1,'n')", -- What command to issue when we can't find a pair (e.g. "normal! %")
+          -- Automatically jump forward to textobj, similar to targets.vim
+          lookahead = true,
           keymaps = {
-            goto_partner = '<leader>%',
-            delete_balanced = 'X',
-          },
-          delete_balanced = {
-            only_on_first_char = false, -- whether to trigger balanced delete when on first character of a pair
-            fallback_cmd_normal = nil, -- fallback command when no pair found, can be nil
-            longest_partner = false, -- whether to delete the longest or the shortest pair when multiple found.
-            -- E.g. whether to delete the angle bracket or whole tag in  <pair> </pair>
+            -- You can use the capture groups defined in textobjects.scm
+            ['af'] = '@function.outer',
+            ['if'] = '@function.inner',
+            ['ac'] = '@class.outer',
+            ['ic'] = '@class.inner',
+            ['aC'] = '@conditional.outer',
+            ['iC'] = '@conditional.inner',
+            ['aS'] = '@tag.self-closing',
+            ['ap'] = '@json.property',
           },
         },
-        incremental_selection = {
+      },
+
+      refactor = {
+        -- Highlights definition and usages of the current symbol under the cursor.
+        highlight_definitions = {
+          enable = true,
+          -- Set to false if you have an `updatetime` of ~100.
+          clear_on_cursor_move = true,
+        },
+        -- Renames the symbol under the cursor within the current scope (and current file).
+        -- Disabled; prefer using LSP, as it can rename the same symbol outside this file.
+        smart_rename = { enable = false },
+        -- Provides "go to definition" for the symbol under the cursor, and lists the definitions from the current file.
+        -- If you use goto_definition_lsp_fallback instead of goto_definition in the config below vim.lsp.buf.definition
+        -- is used if nvim-treesitter can not resolve the variable. goto_next_usage/goto_previous_usage go to the next usage
+        -- of the identifier under the cursor.
+        navigation = {
           enable = true,
           keymaps = {
-            init_selection = '<CR>',
-            node_incremental = '<CR>',
-            scope_incremental = '<S-CR>',
-            node_decremental = '<BS>',
+            goto_definition = 'gnd',
+            list_definitions = 'gnD',
+            list_definitions_toc = 'gO',
+            goto_next_usage = '<a-*>',
+            goto_previous_usage = '<a-#>',
           },
         },
-        textobjects = {
-          select = {
-            enable = true,
-            -- Automatically jump forward to textobj, similar to targets.vim
-            lookahead = true,
-            keymaps = {
-              -- You can use the capture groups defined in textobjects.scm
-              ['af'] = '@function.outer',
-              ['if'] = '@function.inner',
-              ['ac'] = '@class.outer',
-              ['ic'] = '@class.inner',
-              ['aC'] = '@conditional.outer',
-              ['iC'] = '@conditional.inner',
-              ['aS'] = '@tag.self-closing',
-              ['ap'] = '@json.property',
-            },
-          },
-        },
-        refactor = {
-          -- Highlights definition and usages of the current symbol under the cursor.
-          highlight_definitions = {
-            enable = true,
-            -- Set to false if you have an `updatetime` of ~100.
-            clear_on_cursor_move = true,
-          },
-          -- Renames the symbol under the cursor within the current scope (and current file).
-          -- Disabled; prefer using LSP, as it can rename the same symbol outside this file.
-          smart_rename = { enable = false },
-          -- Provides "go to definition" for the symbol under the cursor, and lists the definitions from the current file.
-          -- If you use goto_definition_lsp_fallback instead of goto_definition in the config below vim.lsp.buf.definition
-          -- is used if nvim-treesitter can not resolve the variable. goto_next_usage/goto_previous_usage go to the next usage
-          -- of the identifier under the cursor.
-          navigation = {
-            enable = true,
-            keymaps = {
-              goto_definition = 'gnd',
-              list_definitions = 'gnD',
-              list_definitions_toc = 'gO',
-              goto_next_usage = '<a-*>',
-              goto_previous_usage = '<a-#>',
-            },
-          },
-        },
-        -- View treesitter information directly in Neovim!
-        playground = {
-          enable = true,
-          updatetime = 25, -- Debounced time for highlighting nodes in the playground from source code
-        },
-      }
+      },
+      -- View treesitter information directly in Neovim!
+      playground = {
+        enable = true,
+        updatetime = 25, -- Debounced time for highlighting nodes in the playground from source code
+      },
+    },
+    config = function(_, opts)
+      require('nvim-treesitter.configs').setup(opts)
     end,
     build = function()
       require('nvim-treesitter.install').update { with_sync = true }
     end,
   },
+
+  {
+    'chrisgrieser/nvim-various-textobjs',
+    keys = {
+      { 'ii', "<cmd>lua require('various-textobjs').indentation('inner', 'inner')<CR>", mode = { 'o', 'x' } },
+      { 'ai', "<cmd>lua require('various-textobjs').indentation('outer', 'inner')<CR>", mode = { 'o', 'x' } },
+      { 'iI', "<cmd>lua require('various-textobjs').indentation('inner', 'inner')<CR>", mode = { 'o', 'x' } },
+      { 'aI', "<cmd>lua require('various-textobjs').indentation('outer', 'outer')<CR>", mode = { 'o', 'x' } },
+
+      { 'R', "<cmd>lua require('various-textobjs').restOfIndentation()<CR>", mode = { 'o', 'x' } },
+
+      { 'ig', "<cmd>lua require('various-textobjs').greedyOuterIndentation('inner')<CR>", mode = { 'o', 'x' } },
+      { 'ag', "<cmd>lua require('various-textobjs').greedyOuterIndentation('outer')<CR>", mode = { 'o', 'x' } },
+
+      { 'iS', "<cmd>lua require('various-textobjs').subword('inner')<CR>", mode = { 'o', 'x' } },
+      { 'aS', "<cmd>lua require('various-textobjs').subword('outer')<CR>", mode = { 'o', 'x' } },
+
+      { 'C', "<cmd>lua require('various-textobjs').toNextClosingBracket()<CR>", mode = { 'o', 'x' } },
+
+      { 'Q', "<cmd>lua require('various-textobjs').toNextQuotationMark()<CR>", mode = { 'o', 'x' } },
+
+      { 'r', "<cmd>lua require('various-textobjs').restOfParagraph()<CR>", mode = { 'o', 'x' } },
+
+      { 'gG', "<cmd>lua require('various-textobjs').entireBuffer()<CR>", mode = { 'o', 'x' } },
+
+      { 'n', "<cmd>lua require('various-textobjs').nearEoL()<CR>", mode = { 'o', 'x' } },
+
+      { 'i_', "<cmd>lua require('various-textobjs').lineCharacterwise('inner')<CR>", mode = { 'o', 'x' } },
+      { 'a_', "<cmd>lua require('various-textobjs').lineCharacterwise('outer')<CR>", mode = { 'o', 'x' } },
+
+      { '|', "<cmd>lua require('various-textobjs').column()<CR>", mode = { 'o', 'x' } },
+
+      { 'iv', "<cmd>lua require('various-textobjs').value('inner')<CR>", mode = { 'o', 'x' } },
+      { 'av', "<cmd>lua require('various-textobjs').value('outer')<CR>", mode = { 'o', 'x' } },
+
+      { 'ik', "<cmd>lua require('various-textobjs').key('inner')<CR>", mode = { 'o', 'x' } },
+      { 'ak', "<cmd>lua require('various-textobjs').key('outer')<CR>", mode = { 'o', 'x' } },
+
+      { 'L', "<cmd>lua require('various-textobjs').url()<CR>", mode = { 'o', 'x' } },
+
+      { 'in', "<cmd>lua require('various-textobjs').number('inner')<CR>", mode = { 'o', 'x' } },
+      { 'an', "<cmd>lua require('various-textobjs').number('outer')<CR>", mode = { 'o', 'x' } },
+
+      { '!', "<cmd>lua require('various-textobjs').diagnostic()<CR>", mode = { 'o', 'x' } },
+
+      { 'iz', "<cmd>lua require('various-textobjs').closedFold('inner')<CR>", mode = { 'o', 'x' } },
+      { 'az', "<cmd>lua require('various-textobjs').closedFold('outer')<CR>", mode = { 'o', 'x' } },
+
+      { 'im', "<cmd>lua require('various-textobjs').chainMember('inner')<CR>", mode = { 'o', 'x' } },
+      { 'am', "<cmd>lua require('various-textobjs').chainMember('outer')<CR>", mode = { 'o', 'x' } },
+
+      { 'gw', "<cmd>lua require('various-textobjs').visibleInWindow()<CR>", mode = { 'o', 'x' } },
+      { 'gW', "<cmd>lua require('various-textobjs').restOfWindow()<CR>", mode = { 'o', 'x' } },
+
+      {
+        'il',
+        "<cmd>lua require('various-textobjs').mdlink('inner')<CR>",
+        mode = { 'o', 'x' },
+        ft = { 'markdown', 'toml' },
+      },
+      {
+        'al',
+        "<cmd>lua require('various-textobjs').mdlink('outer')<CR>",
+        mode = { 'o', 'x' },
+        ft = { 'markdown', 'toml' },
+      },
+
+      {
+        'iC',
+        "<cmd>lua require('various-textobjs').mdFencedCodeBlock('inner')<CR>",
+        mode = { 'o', 'x' },
+        ft = { 'markdown' },
+      },
+      {
+        'aC',
+        "<cmd>lua require('various-textobjs').mdFencedCodeBlock('outer')<CR>",
+        mode = { 'o', 'x' },
+        ft = { 'markdown' },
+      },
+
+      {
+        'ic',
+        "<cmd>lua require('various-textobjs').cssSelector('inner')<CR>",
+        mode = { 'o', 'x' },
+        ft = { 'css', 'scss' },
+      },
+      {
+        'ac',
+        "<cmd>lua require('various-textobjs').cssSelector('outer')<CR>",
+        mode = { 'o', 'x' },
+        ft = { 'css', 'scss' },
+      },
+
+      {
+        'ix',
+        "<cmd>lua require('various-textobjs').htmlAttribute('inner')<CR>",
+        mode = { 'o', 'x' },
+        ft = { 'css', 'scss', 'html', 'xml', 'vue' },
+      },
+      {
+        'ax',
+        "<cmd>lua require('various-textobjs').htmlAttribute('outer')<CR>",
+        mode = { 'o', 'x' },
+        ft = { 'css', 'scss', 'html', 'xml', 'vue' },
+      },
+
+      {
+        'iD',
+        "<cmd>lua require('various-textobjs').doubleSquareBrackets('inner')<CR>",
+        mode = { 'o', 'x' },
+        ft = { 'lua', 'norg', 'sh', 'fish', 'zsh', 'bash', 'markdown' },
+      },
+      {
+        'aD',
+        "<cmd>lua require('various-textobjs').doubleSquareBrackets('outer')<CR>",
+        mode = { 'o', 'x' },
+        ft = { 'lua', 'norg', 'sh', 'fish', 'zsh', 'bash', 'markdown' },
+      },
+
+      {
+        'iP',
+        "<cmd>lua require('various-textobjs').shellPipe('inner')<CR>",
+        mode = { 'o', 'x' },
+        ft = { 'sh', 'bash', 'zsh', 'fish' },
+      },
+      {
+        'aP',
+        "<cmd>lua require('various-textobjs').shellPipe('outer')<CR>",
+        mode = { 'o', 'x' },
+        ft = { 'sh', 'bash', 'zsh', 'fish' },
+      },
+    },
+    opts = { useDefaultKeymaps = false },
+  },
+
   {
     -- 'https://git.sr.ht/~whynothugo/lsp_lines.nvim',
     dir = vim.fn.stdpath 'config' .. '/plugins/lsp_lines.nvim',
@@ -736,5 +895,27 @@ return {
   --   'dmmulroy/ts-error-translator.nvim',
   --   dependencies = { 'lsp_lines' },
   --   config = true,
+  -- },
+  -- {
+  -- 	'code-biscuits/nvim-biscuits',
+  -- 	dependencies = { 'treesitter' },
+  -- 	event = { 'BufReadPost', 'BufNewFile' },
+  -- 	opts = {
+  -- 		default_config = {
+  -- 			max_length = 12,
+  -- 			min_distance = 5,
+  -- 			prefix_string = ' 📎 ',
+  -- 		},
+  -- 		language_config = {
+  -- 			html = { prefix_string = ' 🌐 ', },
+  -- 			javascript = {
+  -- 				prefix_string = ' ✨ ',
+  -- 				max_length = 80,
+  -- 			},
+  -- 			python = {
+  -- 				disabled = true,
+  -- 			},
+  -- 		},
+  -- 	},
   -- },
 }

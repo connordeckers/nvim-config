@@ -26,15 +26,15 @@ vim.opt.tabstop = 2
 vim.opt.shiftwidth = 2
 
 -- Highlight yanked text for 250ms
-vim.api.nvim_create_autocmd({ 'TextYankPost' }, {
-  pattern = '*',
-  callback = function()
-    vim.highlight.on_yank {
-      higroup = (vim.fn['hlexists'] 'HighlightedyankRegion' > 0 and 'HighlightedyankRegion' or 'IncSearch'),
-      timeout = 250,
-    }
-  end,
-})
+-- vim.api.nvim_create_autocmd({ 'TextYankPost' }, {
+--   pattern = '*',
+--   callback = function()
+--     vim.highlight.on_yank {
+--       higroup = (vim.fn['hlexists'] 'HighlightedyankRegion' > 0 and 'HighlightedyankRegion' or 'IncSearch'),
+--       timeout = 250,
+--     }
+--   end,
+-- })
 
 --Save undo history
 vim.opt.undofile = true

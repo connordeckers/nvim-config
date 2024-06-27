@@ -92,7 +92,7 @@ return {
     'catppuccin/nvim',
     name = 'catppuccin',
     lazy = false, -- make sure we load this during startup if it is your main colorscheme
-    priority = 1000, -- make sure to load this before all the other start plugins
+    priority = 5000, -- make sure to load this before all the other start plugins
     init = function()
       vim.cmd.colorscheme 'catppuccin'
     end,
@@ -505,7 +505,7 @@ return {
   -------------------
   {
     'akinsho/bufferline.nvim',
-    version = '*',
+    -- version = '*',
     dependencies = {
       'nvim-tree/nvim-web-devicons',
       { 'tiagovla/scope.nvim', opts = { restore_state = true } },
